@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require 'time'
+puts "postgres DUMP_PATH DB_NAME"
+
+today_iso = Time.now.iso8601
+
+dump_path = ARGV[0]
+db = ARGV[1]
+
+restore_command = "pg_restore -h \"$POSTGRES_PORT_5432_TCP_ADDR\" -p \"$POSTGRES_PORT_5432_TCP_PORT\" -U postgres --clean --create #{dump_path} --dbname=#{db}"
+
+puts "Calling #{restore_command} ..."
+system(restore_command)
+
+psql_command = "psql -h \"$POSTGRES_PORT_5432_TCP_ADDR\" -p \"$POSTGRES_PORT_5432_TCP_PORT\" -U postgres #{db} -c '\\dt'"
+puts "Import may be ready"
+system(psql_command)
+
+$?.exitstatus
