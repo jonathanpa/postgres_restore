@@ -1,14 +1,19 @@
 #!/usr/bin/env ruby
 
 require 'time'
-puts "postgres DUMP_PATH DB_NAME"
-
-today_iso = Time.now.iso8601
+puts "postgres DUMP_PATH DB_NAME [FROM_TABLE] [TO_TABLE]"
 
 dump_path = ARGV[0]
 db = ARGV[1]
 
-restore_command = "pg_restore -h \"$POSTGRES_PORT_5432_TCP_ADDR\" -p \"$POSTGRES_PORT_5432_TCP_PORT\" -U postgres --clean --create #{dump_path} --dbname=#{db}"
+from_table = ARGV[2]
+to_table = ARGV[3]
+
+if from_table && to_table
+  restore_command = "pg_restore --data-only --table=#{from_table} #{dump_path} | sed -e \"s/#{from_table}/#{to_table}/\" | psql -h \"$POSTGRES_PORT_5432_TCP_ADDR\" -p \"$POSTGRES_PORT_5432_TCP_PORT\" -U postgres #{db}"
+else
+  restore_command = "pg_restore -h \"$POSTGRES_PORT_5432_TCP_ADDR\" -p \"$POSTGRES_PORT_5432_TCP_PORT\" -U postgres --clean --create #{dump_path} --dbname=#{db}"
+end
 
 puts "Calling #{restore_command} ..."
 system(restore_command)
